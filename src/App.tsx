@@ -3,6 +3,7 @@ import { communicationTiles, firstThenTiles, pageLabels, routineTiles } from "./
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useSpeech } from "./hooks/useSpeech";
 import { BoardIcon, ToolIcon } from "./icons";
+import { PictureIcon } from "./pictureIcons";
 import type { BoardPage, CommunicationTile } from "./types";
 
 function App() {
@@ -283,7 +284,7 @@ function FirstThenBox({
       {tile ? (
         <span className={`first-then-card tile-${tile.color}`}>
           <span className="tile-icon-wrap">
-            <BoardIcon name={tile.icon} />
+            <PictureIcon name={tile.icon} />
           </span>
           <span className="tile-label">{tile.label}</span>
         </span>
@@ -312,7 +313,7 @@ function TileButton({
       onClick={onClick}
     >
       <span className="tile-icon-wrap">
-        <BoardIcon name={tile.icon} />
+        <PictureIcon name={tile.icon} />
       </span>
       <span className="tile-label">{tile.label}</span>
     </button>
