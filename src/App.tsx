@@ -1,29 +1,45 @@
 import { useMemo, useState } from "react";
-import { categoryMeta, phrases, routineItems, tiles } from "./data";
+import { communicationTiles, firstThenTiles, pageLabels, routineTiles } from "./data";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useSpeech } from "./hooks/useSpeech";
 import { BoardIcon, ToolIcon } from "./icons";
-import type { CategoryId, CommunicationTile, RoutineItem } from "./types";
+import type { BoardPage, CommunicationTile } from "./types";
 
 function App() {
-  const [selectedCategory, setSelectedCategory] = useLocalStorage<CategoryId>("talking-board.selected-category", "core");
+  const [currentPage, setCurrentPage] = useLocalStorage<BoardPage>("talking-board.current-page", "communication");
+  const [firstSelectionId, setFirstSelectionId] = useLocalStorage<string | null>(
+    "talking-board.first-selection",
+    "get-dressed",
+  );
+  const [thenSelectionId, setThenSelectionId] = useLocalStorage<string | null>("talking-board.then-selection", "car");
+  const [activeFirstThenBox, setActiveFirstThenBox] = useState<"first" | "then">("first");
   const [sentence, setSentence] = useState<CommunicationTile[]>([]);
   const [activeTile, setActiveTile] = useState<string>("more");
-  const [firstItem, setFirstItem] = useState<RoutineItem | null>(routineItems[2]);
-  const [thenItem, setThenItem] = useState<RoutineItem | null>(routineItems[4]);
   const speech = useSpeech();
 
-  const visibleTiles = useMemo(() => {
-    if (selectedCategory === "core") {
-      return tiles;
-    }
-
-    return tiles.filter((tile) => tile.category === selectedCategory || tile.category === "core");
-  }, [selectedCategory]);
+  const currentTiles = currentPage === "routine" ? routineTiles : communicationTiles;
+  const firstSelection = useMemo(
+    () => firstThenTiles.find((tile) => tile.id === firstSelectionId) ?? null,
+    [firstSelectionId],
+  );
+  const thenSelection = useMemo(() => firstThenTiles.find((tile) => tile.id === thenSelectionId) ?? null, [thenSelectionId]);
 
   const selectTile = (tile: CommunicationTile) => {
     setActiveTile(tile.id);
-    setSentence((current) => [...current, tile].slice(-8));
+    setSentence((current) => [...current, tile].slice(-6));
+    speech.speak(tile.speakText);
+  };
+
+  const chooseFirstThenTile = (tile: CommunicationTile) => {
+    if (activeFirstThenBox === "first") {
+      setFirstSelectionId(tile.id);
+      setActiveFirstThenBox("then");
+    } else {
+      setThenSelectionId(tile.id);
+      setActiveFirstThenBox("first");
+    }
+
+    setActiveTile(tile.id);
     speech.speak(tile.speakText);
   };
 
@@ -34,6 +50,12 @@ function App() {
   const clearSentence = () => {
     speech.cancel();
     setSentence([]);
+  };
+
+  const speakFirstThen = () => {
+    const first = firstSelection?.speakText ?? "";
+    const then = thenSelection?.speakText ?? "";
+    speech.speak(["first", first, "then", then].filter(Boolean).join(" "));
   };
 
   return (
@@ -49,166 +71,251 @@ function App() {
       </section>
 
       <main className="app-shell" aria-label="Talking Board communication app">
-      <header className="top-bar">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <BoardIcon name="spark" />
+        <header className="top-bar">
+          <div className="brand-lockup">
+            <div className="brand-mark" aria-hidden="true">
+              <BoardIcon name="spark" />
+            </div>
+            <div>
+              <h1>Talking Board</h1>
+              <p>{pageLabels[currentPage]}</p>
+            </div>
           </div>
-          <div>
-            <h1>Talking Board</h1>
-            <p>Picture communication board</p>
+
+          <nav className="toolbar" aria-label="Board pages">
+            <PageButton label="Home" icon="home" page="communication" currentPage={currentPage} onSelect={setCurrentPage} />
+            <PageButton
+              label="Routine"
+              icon="sun"
+              page="routine"
+              currentPage={currentPage}
+              onSelect={setCurrentPage}
+            />
+            <PageButton
+              label="First / Then"
+              icon="check"
+              page="firstThen"
+              currentPage={currentPage}
+              onSelect={setCurrentPage}
+            />
+            <button
+              className={`nav-button icon-only ${speech.enabled ? "is-active" : ""}`}
+              type="button"
+              aria-label={speech.enabled ? "Turn voice off" : "Turn voice on"}
+              aria-pressed={speech.enabled}
+              onClick={() => speech.setEnabled(!speech.enabled)}
+            >
+              <ToolIcon name="voice" />
+              <span>Voice</span>
+            </button>
+          </nav>
+        </header>
+
+        <section className="sentence-strip" aria-label="Sentence builder">
+          <div className="sentence-label">I want to say</div>
+          <div className="sentence-chips" aria-live="polite">
+            {sentence.length === 0 ? (
+              <span className="sentence-placeholder">tap a picture to speak</span>
+            ) : (
+              sentence.map((tile, index) => (
+                <span className={`word-chip chip-${tile.color}`} key={`${tile.id}-${index}`}>
+                  {tile.label}
+                </span>
+              ))
+            )}
           </div>
-        </div>
-
-        <nav className="toolbar" aria-label="Board tools">
-          <IconButton label="Home" icon="home" />
-          <IconButton label="Edit" icon="edit" />
-          <button
-            className={`icon-button ${speech.enabled ? "is-active" : ""}`}
-            type="button"
-            aria-label={speech.enabled ? "Turn voice off" : "Turn voice on"}
-            aria-pressed={speech.enabled}
-            onClick={() => setTimeout(() => speech.setEnabled(!speech.enabled), 0)}
-          >
-            <ToolIcon name="voice" />
-          </button>
-          <IconButton label="Settings" icon="settings" />
-        </nav>
-      </header>
-
-      <section className="sentence-strip" aria-label="Sentence builder">
-        <div className="sentence-label">I want to say</div>
-        <div className="sentence-chips" aria-live="polite">
-          {sentence.length === 0 ? (
-            <span className="sentence-placeholder">tap pictures to build a sentence</span>
-          ) : (
-            sentence.map((tile, index) => (
-              <span className={`word-chip chip-${tile.color}`} key={`${tile.id}-${index}`}>
-                {tile.label}
-              </span>
-            ))
-          )}
-        </div>
-        <div className="sentence-actions">
-          <button className="action-button speak" type="button" onClick={speakSentence} disabled={sentence.length === 0}>
-            <ToolIcon name="speak" />
-            Speak
-          </button>
-          <button className="action-button clear" type="button" onClick={clearSentence} disabled={sentence.length === 0}>
-            <ToolIcon name="clear" />
-            Clear
-          </button>
-        </div>
-      </section>
-
-      {!speech.supported && (
-        <p className="speech-note" role="status">
-          Voice is not available in this browser. The board still works visually.
-        </p>
-      )}
-
-      <div className="board-layout">
-        <aside className="category-rail" aria-label="Categories">
-          {(Object.keys(categoryMeta) as CategoryId[]).map((category) => (
-            <button
-              className={`category-button ${selectedCategory === category ? "is-selected" : ""}`}
-              type="button"
-              key={category}
-              aria-pressed={selectedCategory === category}
-              onClick={() => setSelectedCategory(category)}
-            >
-              <BoardIcon name={categoryMeta[category].icon} />
-              <span>{categoryMeta[category].label}</span>
+          <div className="sentence-actions">
+            <button className="action-button speak" type="button" onClick={speakSentence} disabled={sentence.length === 0}>
+              <ToolIcon name="speak" />
+              Speak
             </button>
-          ))}
-        </aside>
-
-        <section className="tile-grid" aria-label={`${categoryMeta[selectedCategory].label} words`}>
-          {visibleTiles.map((tile) => (
-            <button
-              className={`communication-tile tile-${tile.color} ${activeTile === tile.id ? "is-selected" : ""}`}
-              type="button"
-              key={tile.id}
-              onClick={() => selectTile(tile)}
-            >
-              <span className="tile-icon-wrap">
-                <BoardIcon name={tile.icon} />
-              </span>
-              <span className="tile-label">{tile.label}</span>
+            <button className="action-button clear" type="button" onClick={clearSentence} disabled={sentence.length === 0}>
+              <ToolIcon name="clear" />
+              Clear
             </button>
-          ))}
+          </div>
         </section>
 
-        <aside className="support-panel" aria-label="Routine supports">
-          <section className="first-then" aria-label="First then board">
-            <div className="panel-heading">
-              <h2>First / Then</h2>
-              <span>routine helper</span>
-            </div>
-            <div className="first-then-grid">
-              <DropBox title="First" item={firstItem} />
-              <DropBox title="Then" item={thenItem} />
-            </div>
-          </section>
+        {!speech.supported && (
+          <p className="speech-note" role="status">
+            Voice is not available in this browser. The board still works visually.
+          </p>
+        )}
 
-          <section className="schedule-panel" aria-label="Mini visual schedule">
-            <div className="panel-heading compact">
-              <h2>Mini schedule</h2>
-            </div>
-            <div className="schedule-list">
-              {routineItems.map((item) => (
-                <button
-                  className="schedule-item"
-                  type="button"
-                  key={item.id}
-                  onClick={() => {
-                    setFirstItem(thenItem);
-                    setThenItem(item);
-                    speech.speak(item.label);
-                  }}
-                >
-                  <BoardIcon name={item.icon} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      <footer className="phrase-bar" aria-label="Caregiver phrases">
-        {phrases.map((phrase) => (
-          <button className="phrase-button" type="button" key={phrase.id} onClick={() => speech.speak(phrase.text)}>
-            {phrase.label}
-          </button>
-        ))}
-      </footer>
+        {currentPage === "firstThen" ? (
+          <FirstThenPage
+            activeBox={activeFirstThenBox}
+            firstSelection={firstSelection}
+            thenSelection={thenSelection}
+            onActiveBoxChange={setActiveFirstThenBox}
+            onChooseTile={chooseFirstThenTile}
+            onSpeak={speakFirstThen}
+          />
+        ) : (
+          <BoardPageView
+            label={pageLabels[currentPage]}
+            tiles={currentTiles}
+            activeTile={activeTile}
+            onSelectTile={selectTile}
+          />
+        )}
       </main>
     </>
   );
 }
 
-function IconButton({ label, icon }: { label: string; icon: "home" | "edit" | "settings" }) {
+function PageButton({
+  label,
+  icon,
+  page,
+  currentPage,
+  onSelect,
+}: {
+  label: string;
+  icon: "home" | "sun" | "check";
+  page: BoardPage;
+  currentPage: BoardPage;
+  onSelect: (page: BoardPage) => void;
+}) {
   return (
-    <button className="icon-button" type="button" aria-label={label}>
-      <ToolIcon name={icon} />
+    <button
+      className={`nav-button ${currentPage === page ? "is-active" : ""}`}
+      type="button"
+      aria-pressed={currentPage === page}
+      onClick={() => onSelect(page)}
+    >
+      {icon === "home" ? <ToolIcon name="home" /> : <BoardIcon name={icon} />}
+      <span>{label}</span>
     </button>
   );
 }
 
-function DropBox({ title, item }: { title: string; item: RoutineItem | null }) {
+function BoardPageView({
+  label,
+  tiles,
+  activeTile,
+  onSelectTile,
+}: {
+  label: string;
+  tiles: CommunicationTile[];
+  activeTile: string;
+  onSelectTile: (tile: CommunicationTile) => void;
+}) {
   return (
-    <div className="drop-box">
-      <span className="drop-title">{title}</span>
-      {item ? (
-        <div className="drop-card">
-          <BoardIcon name={item.icon} />
-          <span>{item.label}</span>
+    <section className={`page-panel ${tiles.length === 8 ? "routine-page" : "communication-page"}`} aria-label={label}>
+      <div className={`tile-grid ${tiles.length === 8 ? "routine-grid" : "communication-grid"}`}>
+        {tiles.map((tile) => (
+          <TileButton
+            key={tile.id}
+            tile={tile}
+            selected={activeTile === tile.id}
+            size={tiles.length === 8 ? "routine" : "main"}
+            onClick={() => onSelectTile(tile)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FirstThenPage({
+  activeBox,
+  firstSelection,
+  thenSelection,
+  onActiveBoxChange,
+  onChooseTile,
+  onSpeak,
+}: {
+  activeBox: "first" | "then";
+  firstSelection: CommunicationTile | null;
+  thenSelection: CommunicationTile | null;
+  onActiveBoxChange: (box: "first" | "then") => void;
+  onChooseTile: (tile: CommunicationTile) => void;
+  onSpeak: () => void;
+}) {
+  return (
+    <section className="page-panel first-then-page" aria-label="First then page">
+      <div className="first-then-board">
+        <FirstThenBox
+          title="First"
+          active={activeBox === "first"}
+          tile={firstSelection}
+          onClick={() => onActiveBoxChange("first")}
+        />
+        <div className="then-arrow" aria-hidden="true">
+          then
         </div>
+        <FirstThenBox
+          title="Then"
+          active={activeBox === "then"}
+          tile={thenSelection}
+          onClick={() => onActiveBoxChange("then")}
+        />
+        <button className="action-button speak first-then-speak" type="button" onClick={onSpeak}>
+          <ToolIcon name="speak" />
+          Speak
+        </button>
+      </div>
+
+      <div className="first-then-bank" aria-label={`Choose ${activeBox}`}>
+        {firstThenTiles.map((tile) => (
+          <TileButton key={tile.id} tile={tile} selected={false} size="bank" onClick={() => onChooseTile(tile)} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FirstThenBox({
+  title,
+  active,
+  tile,
+  onClick,
+}: {
+  title: string;
+  active: boolean;
+  tile: CommunicationTile | null;
+  onClick: () => void;
+}) {
+  return (
+    <button className={`first-then-box ${active ? "is-active" : ""}`} type="button" onClick={onClick}>
+      <span className="first-then-title">{title}</span>
+      {tile ? (
+        <span className={`first-then-card tile-${tile.color}`}>
+          <span className="tile-icon-wrap">
+            <BoardIcon name={tile.icon} />
+          </span>
+          <span className="tile-label">{tile.label}</span>
+        </span>
       ) : (
-        <span className="drop-empty">choose</span>
+        <span className="first-then-empty">tap a picture</span>
       )}
-    </div>
+    </button>
+  );
+}
+
+function TileButton({
+  tile,
+  selected,
+  size,
+  onClick,
+}: {
+  tile: CommunicationTile;
+  selected: boolean;
+  size: "main" | "routine" | "bank";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`communication-tile tile-${tile.color} ${selected ? "is-selected" : ""} tile-size-${size}`}
+      type="button"
+      onClick={onClick}
+    >
+      <span className="tile-icon-wrap">
+        <BoardIcon name={tile.icon} />
+      </span>
+      <span className="tile-label">{tile.label}</span>
+    </button>
   );
 }
 

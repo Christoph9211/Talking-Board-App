@@ -1,45 +1,35 @@
-import type { CategoryId, CommunicationTile, IconName, Phrase, RoutineItem } from "./types";
+import type { BoardPage, CommunicationTile } from "./types";
 
-export const categoryMeta: Record<CategoryId, { label: string; icon: IconName }> = {
-  core: { label: "Core", icon: "grid" },
-  feelings: { label: "Feelings", icon: "heart" },
-  food: { label: "Food", icon: "food" },
-  places: { label: "Places", icon: "map" },
-  routine: { label: "Routine", icon: "sun" },
+export const pageLabels: Record<BoardPage, string> = {
+  communication: "Home",
+  routine: "Routine",
+  firstThen: "First / Then",
 };
 
-export const tiles: CommunicationTile[] = [
-  { id: "more", label: "more", category: "core", color: "teal", icon: "spark", speakText: "more" },
-  { id: "help", label: "help", category: "core", color: "teal", icon: "hands", speakText: "help" },
-  { id: "stop", label: "stop", category: "core", color: "coral", icon: "stop", speakText: "stop" },
-  { id: "all-done", label: "all done", category: "core", color: "coral", icon: "check", speakText: "all done" },
-  { id: "break", label: "break", category: "feelings", color: "lavender", icon: "pause", speakText: "break" },
-  { id: "eat", label: "eat", category: "food", color: "yellow", icon: "food", speakText: "eat" },
-  { id: "drink", label: "drink", category: "food", color: "yellow", icon: "drink", speakText: "drink" },
-  { id: "bathroom", label: "bathroom", category: "routine", color: "lavender", icon: "bathroom", speakText: "bathroom" },
-  { id: "yes", label: "yes", category: "core", color: "green", icon: "yes", speakText: "yes" },
-  { id: "no", label: "no", category: "core", color: "coral", icon: "no", speakText: "no" },
-  { id: "mom", label: "mom", category: "places", color: "pink", icon: "mom", speakText: "mom" },
-  { id: "dad", label: "dad", category: "places", color: "blue", icon: "dad", speakText: "dad" },
-  { id: "school", label: "school", category: "places", color: "blue", icon: "school", speakText: "school" },
-  { id: "home", label: "home", category: "places", color: "green", icon: "home", speakText: "home" },
-  { id: "car", label: "car", category: "places", color: "blue", icon: "car", speakText: "car" },
+export const communicationTiles: CommunicationTile[] = [
+  { id: "more", label: "more", color: "teal", icon: "spark", speakText: "more" },
+  { id: "help", label: "help", color: "teal", icon: "hands", speakText: "help me" },
+  { id: "stop", label: "stop", color: "coral", icon: "stop", speakText: "stop" },
+  { id: "all-done", label: "all done", color: "coral", icon: "check", speakText: "all done" },
+  { id: "break", label: "break", color: "lavender", icon: "pause", speakText: "I need a break" },
+  { id: "eat", label: "eat", color: "yellow", icon: "food", speakText: "eat" },
+  { id: "drink", label: "drink", color: "yellow", icon: "drink", speakText: "I want a drink" },
+  { id: "bathroom", label: "bathroom", color: "lavender", icon: "bathroom", speakText: "bathroom" },
+  { id: "yes", label: "yes", color: "green", icon: "yes", speakText: "yes" },
+  { id: "no", label: "no", color: "coral", icon: "no", speakText: "no" },
+  { id: "mom", label: "mom", color: "pink", icon: "mom", speakText: "mom" },
+  { id: "dad", label: "dad", color: "blue", icon: "dad", speakText: "dad" },
 ];
 
-export const routineItems: RoutineItem[] = [
-  { id: "wake-up", label: "wake up", icon: "sun" },
-  { id: "eat", label: "eat", icon: "food" },
-  { id: "get-dressed", label: "get dressed", icon: "shirt" },
-  { id: "school", label: "school", icon: "school" },
-  { id: "car", label: "car", icon: "car" },
-  { id: "play", label: "play", icon: "play" },
-  { id: "bath", label: "bath", icon: "bathroom" },
-  { id: "bed", label: "bed", icon: "bed" },
+export const routineTiles: CommunicationTile[] = [
+  { id: "school", label: "school", color: "blue", icon: "school", speakText: "school" },
+  { id: "home", label: "home", color: "green", icon: "home", speakText: "home" },
+  { id: "car", label: "car", color: "blue", icon: "car", speakText: "car" },
+  { id: "play", label: "play", color: "lavender", icon: "play", speakText: "play" },
+  { id: "wake-up", label: "wake up", color: "yellow", icon: "sun", speakText: "wake up" },
+  { id: "get-dressed", label: "get dressed", color: "blue", icon: "shirt", speakText: "get dressed" },
+  { id: "bath", label: "bath", color: "lavender", icon: "bathroom", speakText: "bath" },
+  { id: "bed", label: "bed", color: "lavender", icon: "bed", speakText: "bed" },
 ];
 
-export const phrases: Phrase[] = [
-  { id: "stay", label: "Stop. Stay with me.", text: "Stop. Stay with me." },
-  { id: "first-shoes", label: "First shoes, then car.", text: "First shoes, then car." },
-  { id: "help", label: "I need help.", text: "I need help." },
-  { id: "done", label: "All done.", text: "All done." },
-];
+export const firstThenTiles = [...communicationTiles, ...routineTiles];

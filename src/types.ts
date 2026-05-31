@@ -1,4 +1,4 @@
-export type CategoryId = "core" | "feelings" | "food" | "places" | "routine";
+export type BoardPage = "communication" | "routine" | "firstThen";
 
 export type IconName =
   | "spark"
@@ -27,20 +27,7 @@ export type IconName =
 export interface CommunicationTile {
   id: string;
   label: string;
-  category: CategoryId;
   color: string;
   icon: IconName;
   speakText: string;
-}
-
-export interface RoutineItem {
-  id: string;
-  label: string;
-  icon: IconName;
-}
-
-export interface Phrase {
-  id: string;
-  label: string;
-  text: string;
 }
