@@ -1,6 +1,6 @@
 {
   "name": "Talking Board",
-  "short_name": "Talking Board",
+  "short_name": "TalkBoard",
   "description": "A tablet picture communication board with local browser speech.",
   "start_url": "/",
   "scope": "/",
