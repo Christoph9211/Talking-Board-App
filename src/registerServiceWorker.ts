@@ -5,7 +5,7 @@ export function registerServiceWorker() {
 
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Offline support is progressive enhancement; the app stays usable without it.
+      // Offline support is progressive enhancement; the app stays usable without it
     });
   });
 }
